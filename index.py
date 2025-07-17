@@ -1,45 +1,37 @@
 import pandas as pd
 
-# Data CSV kamu disimpan dalam file, misal: data_siswa.csv
-# Kalau kamu punya data langsung sebagai string, bisa juga dimasukkan ke pd.read_csv dari StringIO
+# Nama file CSV yang kamu pakai
+file_path = '01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
 
-# Contoh load dari file CSV:
-file_path = 'data_siswa.csv'
+# Baca CSV dengan parse tanggal, dayfirst=True untuk format tanggal dd-mmm-yy seperti di data
+df = pd.read_csv(file_path, parse_dates=['Tanggal Daftar', 'Tanggal Lahir'], dayfirst=True, keep_default_na=False)
 
-# Baca CSV dengan pandas, parse kolom tanggal
-df = pd.read_csv(file_path, parse_dates=['Tanggal Daftar', 'Tanggal Lahir'], dayfirst=True, 
-                 dayfirst=True, infer_datetime_format=True, 
-                 keep_default_na=False)
-
-# Beberapa perbaikan umum:
-
-# 1. Perbaiki tipe data kolom tanggal (kalau ada yang gagal parse)
+# Perbaikan tanggal yang gagal parse (ubah ke NaT)
 df['Tanggal Daftar'] = pd.to_datetime(df['Tanggal Daftar'], errors='coerce', dayfirst=True)
 df['Tanggal Lahir'] = pd.to_datetime(df['Tanggal Lahir'], errors='coerce', dayfirst=True)
 
-# 2. Isi data kosong dengan nilai default, misalnya '-' untuk string
+# Isi nilai kosong dengan '-'
 df.fillna('-', inplace=True)
 
-# 3. Hilangkan spasi ekstra di string (kolom bertipe object)
+# Hapus spasi ekstra di kolom string
 for col in df.select_dtypes(include=['object']).columns:
     df[col] = df[col].str.strip()
 
-# 4. Cek dan hapus duplikat berdasarkan kolom NIS atau No (unik)
+# Hapus data duplikat berdasarkan 'NIS'
 df.drop_duplicates(subset=['NIS'], inplace=True)
 
-# 5. Normalisasi kolom "Status" agar konsisten (huruf kapital awal)
+# Konsistensi kolom Status (kapital awal)
 df['Status'] = df['Status'].str.capitalize()
 
-# 6. Normalisasi kolom jenis kelamin (JK) menjadi 'L' dan 'P' saja uppercase
+# Konsistensi kolom JK (huruf besar)
 df['JK'] = df['JK'].str.upper()
 
-# 7. Jika ada nomor HP dengan '0' (string nol), ganti jadi '-' supaya jelas kosong
+# Ganti '0' di kolom 'No Handphone' jadi '-'
 df['No Handphone'] = df['No Handphone'].replace('0', '-')
 
-# Tampilkan hasil perbaikan dan 10 baris pertama
-print("Data siswa setelah perbaikan:")
+# Tampilkan 10 baris pertama hasil perbaikan
 print(df.head(10))
 
-# Simpan kembali ke CSV jika perlu
+# Simpan hasil ke file baru
 df.to_csv('data_siswa_perbaikan.csv', index=False)
 print("File 'data_siswa_perbaikan.csv' berhasil disimpan.")
