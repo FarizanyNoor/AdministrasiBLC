@@ -1,148 +1,157 @@
 import streamlit as st
 import pandas as pd
 import os
+from datetime import datetime
 
+# Path file siswa
 FILE_CSV = 'data/01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
 
+# Load data siswa
 @st.cache_data
 def load_data():
-    if not os.path.exists(FILE_CSV):
+    if os.path.exists(FILE_CSV):
+        df = pd.read_csv(FILE_CSV)
+        return df
+    else:
         return pd.DataFrame()
-    try:
-        df = pd.read_csv(FILE_CSV, parse_dates=['Tanggal Daftar', 'Tanggal Lahir'], dayfirst=True, keep_default_na=False)
-    except Exception:
-        df = pd.read_csv(FILE_CSV, keep_default_na=False)
-    
-    for col in ['Tanggal Daftar', 'Tanggal Lahir']:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce', dayfirst=True)
-    
-    df.fillna('-', inplace=True)
-    for col in df.select_dtypes(include=['object']).columns:
-        df[col] = df[col].astype(str).str.strip()
-    if 'NIS' in df.columns:
-        df.drop_duplicates(subset=['NIS'], inplace=True)
-    if 'Status' in df.columns:
-        df['Status'] = df['Status'].str.capitalize()
-    if 'JK' in df.columns:
-        df['JK'] = df['JK'].str.upper()
-    return df
 
-def safe_date(value):
-    try:
-        return pd.to_datetime(value)
-    except:
-        return pd.to_datetime("2000-01-01")
+def save_data(df):
+    df.to_csv(FILE_CSV, index=False)
 
-def main():
-    st.title("Aplikasi Administrasi Data Siswa BLC Cicukang")
+st.set_page_config(page_title="Aplikasi Administrasi Data Siswa", layout="wide")
+st.title("Aplikasi Administrasi Data Siswa")
 
+guru_menu = st.sidebar.selectbox("Pilih Jenis Data:", ["Siswa", "Guru"])
+
+# === FITUR UNTUK DATA SISWA ===
+if guru_menu == "Siswa":
     menu = st.sidebar.selectbox("Pilih Menu Fitur:", [
-        "Lihat Data", 
-        "Tambah Data", 
-        "Edit Data", 
-        "Hapus Data", 
+        "Lihat Data",
+        "Tambah Data",
+        "Edit Data",
+        "Hapus Data",
         "Cari Data"
     ])
 
     df = load_data()
 
-    if df.empty:
-        st.warning(f"Data kosong atau file CSV tidak ditemukan di: `{FILE_CSV}`")
-        return
-
     if menu == "Lihat Data":
         st.subheader("Data Siswa")
-        st.dataframe(df)
+        if not df.empty:
+            st.dataframe(df)
+        else:
+            st.warning("Data siswa belum tersedia.")
 
     elif menu == "Tambah Data":
-        st.subheader("Tambah Data Siswa Baru")
-        with st.form("form_tambah", clear_on_submit=True):
-            data_baru = {}
-            for kolom in df.columns:
-                if kolom == "No":
-                    continue
-                elif "Tanggal" in kolom:
-                    data_baru[kolom] = st.date_input(kolom)
-                elif kolom == "JK":
-                    data_baru[kolom] = st.selectbox(kolom, ["L", "P"])
-                elif kolom == "Status":
-                    data_baru[kolom] = st.selectbox(kolom, ["Aktif", "Non Aktif"])
+        st.subheader("Tambah Data Siswa")
+        with st.form("form_tambah"):
+            columns = df.columns.tolist() if not df.empty else [
+                'NIS', 'Nama', 'JK', 'Tempat Lahir', 'Tanggal Lahir',
+                'Nama Orang Tua', 'Alamat', 'No Handphone', 'Tanggal Daftar', 'Status'
+            ]
+            input_data = {}
+            for col in columns:
+                if "Tanggal" in col:
+                    input_data[col] = st.date_input(col)
                 else:
-                    data_baru[kolom] = st.text_input(kolom)
-            submit = st.form_submit_button("Tambah")
+                    input_data[col] = st.text_input(col)
+            submitted = st.form_submit_button("Tambah")
 
-        if submit:
-            if data_baru['NIS'] in df['NIS'].values:
-                st.error("NIS sudah ada, tidak bisa tambah data duplikat.")
-            else:
-                data_baru['No'] = df['No'].max() + 1 if 'No' in df.columns else len(df) + 1
-                df = pd.concat([df, pd.DataFrame([data_baru])], ignore_index=True)
-                st.success("Data siswa baru berhasil ditambahkan.")
-                st.dataframe(df.tail(5))
+        if submitted:
+            new_row = pd.DataFrame([input_data])
+            df = pd.concat([df, new_row], ignore_index=True)
+            save_data(df)
+            st.success("Data siswa berhasil ditambahkan.")
 
     elif menu == "Edit Data":
-        st.subheader("Edit Data Siswa Berdasarkan NIS")
-        with st.form("form_cari_edit"):
-            nis_edit = st.text_input("Masukkan NIS Siswa yang Akan Diedit")
-            cari = st.form_submit_button("Cari")
+        st.subheader("Edit Data Siswa")
+        nis = st.text_input("Masukkan NIS yang ingin diedit:")
 
-        if cari and nis_edit in df['NIS'].values:
-            data_lama = df[df['NIS'] == nis_edit].iloc[0]
-            with st.form("form_edit"):
-                data_baru = {}
-                for kolom in df.columns:
-                    if kolom == "No":
-                        continue
-                    elif "Tanggal" in kolom:
-                        data_baru[kolom] = st.date_input(kolom, value=safe_date(data_lama[kolom]))
-                    elif kolom == "JK":
-                        data_baru[kolom] = st.selectbox(kolom, ["L", "P"], index=["L", "P"].index(data_lama.get(kolom, "L")))
-                    elif kolom == "Status":
-                        data_baru[kolom] = st.selectbox(kolom, ["Aktif", "Non Aktif"], index=["Aktif", "Non Aktif"].index(data_lama.get(kolom, "Aktif")))
-                    else:
-                        data_baru[kolom] = st.text_input(kolom, value=str(data_lama[kolom]))
-                update = st.form_submit_button("Update")
+        if nis:
+            if nis in df['NIS'].astype(str).values:
+                idx = df[df['NIS'].astype(str) == nis].index[0]
+                st.info(f"Data ditemukan untuk NIS: {nis}")
+                with st.form("form_edit"):
+                    edited_data = {}
+                    for col in df.columns:
+                        default_value = df.at[idx, col]
+                        if "Tanggal" in col:
+                            try:
+                                default_date = pd.to_datetime(default_value)
+                                edited_data[col] = st.date_input(col, default_date)
+                            except:
+                                edited_data[col] = st.date_input(col)
+                        else:
+                            edited_data[col] = st.text_input(col, str(default_value))
+                    submit_edit = st.form_submit_button("Simpan Perubahan")
 
-            if update:
-                for k, v in data_baru.items():
-                    df.loc[df['NIS'] == nis_edit, k] = v
-                st.success("Data berhasil diperbarui.")
-                st.dataframe(df[df['NIS'] == nis_edit])
-        elif cari:
-            st.warning("NIS tidak ditemukan.")
+                if submit_edit:
+                    for col in df.columns:
+                        df.at[idx, col] = edited_data[col]
+                    save_data(df)
+                    st.success("Data siswa berhasil diperbarui.")
+            else:
+                st.warning("NIS tidak ditemukan.")
 
     elif menu == "Hapus Data":
         st.subheader("Hapus Data Siswa")
-        with st.form("form_hapus"):
-            nis_to_delete = st.text_input("Masukkan NIS siswa yang ingin dihapus")
-            hapus = st.form_submit_button("Hapus")
-        
-        if hapus:
-            if nis_to_delete in df['NIS'].values:
-                df = df[df['NIS'] != nis_to_delete]
-                st.success(f"Data dengan NIS {nis_to_delete} berhasil dihapus.")
-                st.dataframe(df)
+        nis = st.text_input("Masukkan NIS yang ingin dihapus:")
+        if st.button("Hapus"):
+            if nis in df['NIS'].astype(str).values:
+                df = df[df['NIS'].astype(str) != nis]
+                save_data(df)
+                st.success(f"Data dengan NIS {nis} berhasil dihapus.")
             else:
-                st.error("NIS tidak ditemukan.")
+                st.warning("NIS tidak ditemukan.")
 
     elif menu == "Cari Data":
         st.subheader("Cari Data Siswa")
-        with st.form("form_cari"):
-            kolom_terpilih = st.selectbox("Pilih Kolom yang Ingin Dicari", df.columns.tolist())
-            kata_kunci = st.text_input("Masukkan Kata Kunci atau Angka yang Dicari")
-            cari = st.form_submit_button("Cari")
+        if not df.empty:
+            kolom_dicari = st.selectbox("Pilih Kolom:", df.columns.tolist())
+            keyword = st.text_input("Masukkan kata kunci pencarian:")
 
-        if cari:
-            if kata_kunci.strip() == "":
-                st.warning("Masukkan kata kunci terlebih dahulu.")
+            if keyword:
+                hasil = df[df[kolom_dicari].astype(str).str.contains(keyword, case=False, na=False)]
+                st.dataframe(hasil)
+                st.info(f"Ditemukan {len(hasil)} hasil.")
+        else:
+            st.warning("Data siswa belum tersedia.")
+
+# === FITUR UNTUK ABSENSI GURU ===
+elif guru_menu == "Guru":
+    absen_file = 'data/absen_guru.csv'
+    submenu = st.sidebar.selectbox("Pilih Menu Guru:", ["Absen Guru", "Lihat Absen"])
+
+    if submenu == "Absen Guru":
+        st.subheader("Form Absensi Guru")
+        with st.form("form_absen_guru"):
+            nama = st.text_input("Nama Guru")
+            tanggal = st.date_input("Tanggal", datetime.now())
+            status = st.selectbox("Status", ["Hadir", "Izin", "Sakit", "Alfa"])
+            keterangan = st.text_area("Keterangan (opsional)")
+            submit_absen = st.form_submit_button("Absen")
+
+        if submit_absen:
+            new_row = pd.DataFrame([{
+                "Nama": nama,
+                "Tanggal": tanggal,
+                "Status": status,
+                "Keterangan": keterangan
+            }])
+
+            if os.path.exists(absen_file):
+                df_absen = pd.read_csv(absen_file)
+                df_absen = pd.concat([df_absen, new_row], ignore_index=True)
             else:
-                hasil = df[df[kolom_terpilih].astype(str).str.contains(kata_kunci, case=False, na=False)]
-                if hasil.empty:
-                    st.info(f"Tidak ditemukan hasil untuk '{kata_kunci}' di kolom '{kolom_terpilih}'.")
-                else:
-                    st.success(f"Ditemukan {len(hasil)} data yang cocok.")
-                    st.dataframe(hasil)
+                df_absen = new_row
 
-if __name__ == "__main__":
-    main()
+            df_absen.to_csv(absen_file, index=False)
+            st.success("Absensi berhasil dicatat.")
+
+    elif submenu == "Lihat Absen":
+        st.subheader("Data Absensi Guru")
+        if os.path.exists(absen_file):
+            df_absen = pd.read_csv(absen_file)
+            st.dataframe(df_absen)
+        else:
+            st.warning("Belum ada data absensi.")
