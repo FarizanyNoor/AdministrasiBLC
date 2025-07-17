@@ -3,9 +3,11 @@ import pandas as pd
 import os
 from datetime import datetime
 
-# Konfigurasi
+# Path file
 FILE_CSV = 'data/01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
 ABSEN_GURU = 'data/absen_guru.csv'
+
+# Konfigurasi halaman
 st.set_page_config(page_title="Aplikasi Administrasi Data Siswa", layout="wide")
 
 # Fungsi
@@ -16,7 +18,7 @@ def load_data():
 def save_data(df):
     df.to_csv(FILE_CSV, index=False)
 
-# Sidebar
+# Sidebar navigasi
 st.sidebar.title("📊 Navigasi")
 main_menu = st.sidebar.selectbox("Menu Utama:", ["Beranda", "Siswa", "Guru"])
 
@@ -50,7 +52,10 @@ elif main_menu == "Siswa":
 
         if submenu == "Lihat Data":
             st.subheader("📋 Data Siswa")
-            st.dataframe(df) if not df.empty else st.warning("Data siswa belum tersedia.")
+            if not df.empty:
+                st.dataframe(df)
+            else:
+                st.warning("Data siswa belum tersedia.")
 
         elif submenu == "Tambah Data":
             st.subheader("➕ Tambah Data Siswa")
@@ -79,30 +84,31 @@ elif main_menu == "Siswa":
         elif submenu == "Edit Data":
             st.subheader("✏️ Edit Data Siswa")
             nis = st.text_input("Masukkan NIS yang ingin diedit:")
-            if nis and nis in df['NIS'].astype(str).values:
-                idx = df[df['NIS'].astype(str) == nis].index[0]
-                st.info(f"Data ditemukan untuk NIS: {nis}")
-                with st.form("form_edit"):
-                    edited_data = {}
-                    for col in df.columns:
-                        default_value = df.at[idx, col]
-                        if "Tanggal" in col:
-                            try:
-                                default_date = pd.to_datetime(default_value)
-                                edited_data[col] = st.date_input(col, default_date)
-                            except:
-                                edited_data[col] = st.date_input(col)
-                        else:
-                            edited_data[col] = st.text_input(col, str(default_value))
-                    submit_edit = st.form_submit_button("Simpan Perubahan")
+            if nis:
+                if nis in df['NIS'].astype(str).values:
+                    idx = df[df['NIS'].astype(str) == nis].index[0]
+                    st.info(f"Data ditemukan untuk NIS: {nis}")
+                    with st.form("form_edit"):
+                        edited_data = {}
+                        for col in df.columns:
+                            default_value = df.at[idx, col]
+                            if "Tanggal" in col:
+                                try:
+                                    default_date = pd.to_datetime(default_value)
+                                    edited_data[col] = st.date_input(col, default_date)
+                                except:
+                                    edited_data[col] = st.date_input(col)
+                            else:
+                                edited_data[col] = st.text_input(col, str(default_value))
+                        submit_edit = st.form_submit_button("Simpan Perubahan")
 
-                if submit_edit:
-                    for col in df.columns:
-                        df.at[idx, col] = edited_data[col]
-                    save_data(df)
-                    st.success("Data siswa berhasil diperbarui.")
-            elif nis:
-                st.warning("NIS tidak ditemukan.")
+                    if submit_edit:
+                        for col in df.columns:
+                            df.at[idx, col] = edited_data[col]
+                        save_data(df)
+                        st.success("Data siswa berhasil diperbarui.")
+                else:
+                    st.warning("NIS tidak ditemukan.")
 
         elif submenu == "Hapus Data":
             st.subheader("🗑️ Hapus Data Siswa")
