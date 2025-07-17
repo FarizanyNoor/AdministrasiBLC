@@ -3,14 +3,10 @@ import pandas as pd
 import os
 from datetime import datetime
 
-# Path file
 FILE_CSV = 'data/01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
 ABSEN_GURU = 'data/absen_guru.csv'
-
-# Konfigurasi halaman
 st.set_page_config(page_title="Aplikasi Administrasi Data Siswa", layout="wide")
 
-# Fungsi
 @st.cache_data
 def load_data():
     return pd.read_csv(FILE_CSV) if os.path.exists(FILE_CSV) else pd.DataFrame()
@@ -18,29 +14,51 @@ def load_data():
 def save_data(df):
     df.to_csv(FILE_CSV, index=False)
 
-# Sidebar navigasi
 st.sidebar.title("📊 Navigasi")
 main_menu = st.sidebar.selectbox("Menu Utama:", ["Beranda", "Siswa", "Guru"])
 
 # === BERANDA ===
 if main_menu == "Beranda":
     with st.container():
-        st.title("Aplikasi Administrasi Data Siswa BLC")
-        st.subheader("Selamat Datang di Aplikasi Administrasi BLC")
-        st.markdown("""
-        ### 🏫 Brilliant Learning Center (BLC)
+        st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>🎓 Selamat Datang di Aplikasi Administrasi BLC</h1>", unsafe_allow_html=True)
+        st.divider()
 
-        BLC merupakan lembaga pendidikan yang berfokus pada pengembangan karakter dan pengetahuan anak usia dini dan dasar. Kami berkomitmen untuk memberikan layanan pendidikan berkualitas melalui pendekatan yang humanis, Islami, dan kreatif.
+        col1, col2 = st.columns([2, 1])
 
-        **Alamat:** Kab. Bandung  
-        **Telepon:** 0812-XXXX-XXXX  
-        **Email:** info@blc.sch.id  
-        **Website:** www.blc.sch.id
+        with col1:
+            st.markdown("""
+            ### 🏫 **Tentang BLC (Brilliant Learning Center)**
 
-        Aplikasi ini dibuat untuk membantu pengelolaan data siswa dan absensi guru secara digital, efisien, dan mudah digunakan.
-        """)
+            **BLC** adalah lembaga pendidikan anak usia dini dan dasar yang:
+            - 💡 Mengembangkan karakter dan pengetahuan
+            - 🕌 Mengedepankan nilai **Islam, Humanisme, dan Kreativitas**
+            - 🎯 Fokus pada pelayanan pendidikan berkualitas
+            """)
+            st.markdown("""
+            ### 📍 **Kontak & Alamat**
+            - **Alamat:** Kab. Bandung, Jawa Barat  
+            - **Telepon:** 📞 0812-XXXX-XXXX  
+            - **Email:** ✉️ info@blc.sch.id  
+            - **Website:** 🌐 www.blc.sch.id
+            """)
 
-# === MENU SISWA ===
+        with col2:
+            st.image("https://cdn-icons-png.flaticon.com/512/3135/3135755.png", width=200, caption="BLC Logo")
+
+        st.divider()
+
+        with st.expander("ℹ️ Visi & Misi BLC"):
+            st.markdown("""
+            **Visi:**  
+            *Menjadi lembaga pendidikan unggul yang membentuk generasi berakhlak, cerdas, dan kreatif.*
+
+            **Misi:**
+            - Memberikan pendidikan Islami dan berkarakter
+            - Menciptakan lingkungan belajar menyenangkan
+            - Mengembangkan potensi anak secara holistik
+            """)
+
+# === SISWA ===
 elif main_menu == "Siswa":
     df = load_data()
     submenu = st.sidebar.selectbox("Fitur Siswa:", [
@@ -133,7 +151,7 @@ elif main_menu == "Siswa":
             else:
                 st.warning("Data siswa belum tersedia.")
 
-# === MENU GURU ===
+# === GURU ===
 elif main_menu == "Guru":
     submenu = st.sidebar.selectbox("Fitur Guru:", ["Absen Guru", "Lihat Absen"])
 
