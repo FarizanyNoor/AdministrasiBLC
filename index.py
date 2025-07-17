@@ -26,8 +26,6 @@ def load_data():
         df['Status'] = df['Status'].str.capitalize()
     if 'JK' in df.columns:
         df['JK'] = df['JK'].str.upper()
-    if 'No Handphone' in df.columns:
-        df['No Handphone'] = df['No Handphone'].replace('0', '-')
     return df
 
 def safe_date(value):
@@ -59,7 +57,7 @@ def main():
 
     elif menu == "Tambah Data":
         st.subheader("Tambah Data Siswa Baru")
-        with st.form("form_tambah"):
+        with st.form("form_tambah", clear_on_submit=True):
             data_baru = {}
             for kolom in df.columns:
                 if kolom == "No":
@@ -85,9 +83,11 @@ def main():
 
     elif menu == "Edit Data":
         st.subheader("Edit Data Siswa Berdasarkan NIS")
-        nis_edit = st.text_input("Masukkan NIS Siswa yang Akan Diedit")
+        with st.form("form_cari_edit"):
+            nis_edit = st.text_input("Masukkan NIS Siswa yang Akan Diedit")
+            cari = st.form_submit_button("Cari")
 
-        if nis_edit and nis_edit in df['NIS'].values:
+        if cari and nis_edit in df['NIS'].values:
             data_lama = df[df['NIS'] == nis_edit].iloc[0]
             with st.form("form_edit"):
                 data_baru = {}
@@ -102,20 +102,23 @@ def main():
                         data_baru[kolom] = st.selectbox(kolom, ["Aktif", "Non Aktif"], index=["Aktif", "Non Aktif"].index(data_lama.get(kolom, "Aktif")))
                     else:
                         data_baru[kolom] = st.text_input(kolom, value=str(data_lama[kolom]))
-                submit = st.form_submit_button("Update")
+                update = st.form_submit_button("Update")
 
-            if submit:
+            if update:
                 for k, v in data_baru.items():
                     df.loc[df['NIS'] == nis_edit, k] = v
                 st.success("Data berhasil diperbarui.")
                 st.dataframe(df[df['NIS'] == nis_edit])
-        elif nis_edit:
+        elif cari:
             st.warning("NIS tidak ditemukan.")
 
     elif menu == "Hapus Data":
         st.subheader("Hapus Data Siswa")
-        nis_to_delete = st.text_input("Masukkan NIS siswa yang ingin dihapus")
-        if st.button("Hapus"):
+        with st.form("form_hapus"):
+            nis_to_delete = st.text_input("Masukkan NIS siswa yang ingin dihapus")
+            hapus = st.form_submit_button("Hapus")
+        
+        if hapus:
             if nis_to_delete in df['NIS'].values:
                 df = df[df['NIS'] != nis_to_delete]
                 st.success(f"Data dengan NIS {nis_to_delete} berhasil dihapus.")
@@ -125,9 +128,12 @@ def main():
 
     elif menu == "Cari Data":
         st.subheader("Cari Data Siswa")
-        kolom_terpilih = st.selectbox("Pilih Kolom yang Ingin Dicari", df.columns.tolist())
-        kata_kunci = st.text_input("Masukkan Kata Kunci atau Angka yang Dicari")
-        if st.button("Cari"):
+        with st.form("form_cari"):
+            kolom_terpilih = st.selectbox("Pilih Kolom yang Ingin Dicari", df.columns.tolist())
+            kata_kunci = st.text_input("Masukkan Kata Kunci atau Angka yang Dicari")
+            cari = st.form_submit_button("Cari")
+
+        if cari:
             if kata_kunci.strip() == "":
                 st.warning("Masukkan kata kunci terlebih dahulu.")
             else:
