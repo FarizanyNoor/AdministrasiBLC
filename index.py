@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 
-# Path file CSV
+# Path file CSV sudah disesuaikan
 FILE_CSV = 'data/01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
 
 @st.cache_data
@@ -22,14 +22,10 @@ def load_data():
     df['No Handphone'] = df['No Handphone'].replace('0', '-')
     return df
 
-def save_data(df):
-    df.to_csv(FILE_CSV, index=False)
-    st.success("Data berhasil disimpan ke file CSV.")
-
 def main():
     st.title("Aplikasi Manajemen Data Siswa BLC Cicukang")
 
-    menu = st.sidebar.selectbox("Pilih Menu Fitur:", ["Lihat Data", "Tambah Data", "Hapus Data", "Simpan Data"])
+    menu = st.sidebar.selectbox("Pilih Menu Fitur:", ["Lihat Data", "Tambah Data", "Hapus Data"])
 
     df = load_data()
 
@@ -70,7 +66,6 @@ def main():
                     'No Handphone': no_hp,
                     'Tanggal Lahir': tgl_lahir,
                 }
-                # Supaya sesuai kolom asli, tambahkan kolom lain dengan nilai default '-' jika kolom ada
                 for col in df.columns:
                     if col not in new_data:
                         new_data[col] = '-'
@@ -90,11 +85,6 @@ def main():
                 st.dataframe(df)
             else:
                 st.error("NIS tidak ditemukan.")
-
-    elif menu == "Simpan Data":
-        st.subheader("Simpan Data ke File CSV")
-        if st.button("Simpan"):
-            save_data(df)
 
 if __name__ == "__main__":
     main()
