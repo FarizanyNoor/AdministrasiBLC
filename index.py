@@ -28,11 +28,11 @@ main_menu = st.sidebar.selectbox("Menu Utama:", ["Beranda", "Siswa", "Guru"])
 if main_menu == "Beranda":
     st.subheader("Selamat Datang di Aplikasi Administrasi BLC")
     st.markdown("""
-    ### 🏫 Bina Lestari Cendekia (BLC)
+    ### 🏫 Brilliant Learning Center (BLC)
     
-    Bina Lestari Cendekia (BLC) merupakan lembaga pendidikan yang berfokus pada pengembangan karakter dan pengetahuan anak usia dini dan dasar. Kami berkomitmen untuk memberikan layanan pendidikan berkualitas melalui pendekatan yang humanis, Islami, dan kreatif.
+    BLC merupakan lembaga pendidikan yang berfokus pada pengembangan karakter dan pengetahuan anak usia dini dan dasar. Kami berkomitmen untuk memberikan layanan pendidikan berkualitas melalui pendekatan yang humanis, Islami, dan kreatif.
 
-    **Alamat:** Cicukang, Bojongsoang, Kab. Bandung  
+    **Alamat:Kab. Bandung  
     **Telepon:** 0812-XXXX-XXXX  
     **Email:** info@blc.sch.id  
     **Website:** www.blc.sch.id
