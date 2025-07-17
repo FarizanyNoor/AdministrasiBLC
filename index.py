@@ -3,12 +3,12 @@ import pandas as pd
 import os
 from datetime import datetime
 
-# ======================= KONFIGURASI =======================
+# Konfigurasi
 FILE_CSV = 'data/01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
 ABSEN_GURU = 'data/absen_guru.csv'
 st.set_page_config(page_title="Aplikasi Administrasi Data Siswa", layout="wide")
 
-# ======================= FUNGSI =======================
+# Fungsi
 @st.cache_data
 def load_data():
     return pd.read_csv(FILE_CSV) if os.path.exists(FILE_CSV) else pd.DataFrame()
@@ -16,38 +16,12 @@ def load_data():
 def save_data(df):
     df.to_csv(FILE_CSV, index=False)
 
-# ======================= STYLING =======================
-st.markdown("""
-    <style>
-        div.block-container {
-            padding-top: 0rem;
-        }
-        .nav-btn {
-            display: inline-block;
-            margin-right: 1.5rem;
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #444;
-        }
-        .nav-bar {
-            background-color: #f0f2f6;
-            padding: 1rem 1rem 0.2rem 1rem;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 1rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# Sidebar
+st.sidebar.title("📊 Navigasi")
+main_menu = st.sidebar.selectbox("Menu Utama:", ["Beranda", "Siswa", "Guru"])
 
-# ======================= NAVIGASI PALING ATAS =======================
-nav = st.radio(
-    label="",
-    options=["🏠 Beranda", "👦 Siswa", "👨‍🏫 Guru"],
-    horizontal=True,
-    label_visibility="collapsed"
-)
-
-# ======================= HALAMAN: BERANDA =======================
-if nav == "🏠 Beranda":
+# === BERANDA ===
+if main_menu == "Beranda":
     with st.container():
         st.title("Aplikasi Administrasi Data Siswa BLC")
         st.subheader("Selamat Datang di Aplikasi Administrasi BLC")
@@ -64,21 +38,21 @@ if nav == "🏠 Beranda":
         Aplikasi ini dibuat untuk membantu pengelolaan data siswa dan absensi guru secara digital, efisien, dan mudah digunakan.
         """)
 
-# ======================= HALAMAN: SISWA =======================
-elif nav == "👦 Siswa":
+# === MENU SISWA ===
+elif main_menu == "Siswa":
+    df = load_data()
+    submenu = st.sidebar.selectbox("Fitur Siswa:", [
+        "Lihat Data", "Tambah Data", "Edit Data", "Hapus Data", "Cari Data"
+    ])
+
     with st.container():
-        st.title("📚 Manajemen Data Siswa")
-        menu = st.selectbox("Pilih Menu Siswa:", [
-            "Lihat Data", "Tambah Data", "Edit Data", "Hapus Data", "Cari Data"
-        ])
+        st.title("👦 Manajemen Data Siswa")
 
-        df = load_data()
-
-        if menu == "Lihat Data":
+        if submenu == "Lihat Data":
             st.subheader("📋 Data Siswa")
             st.dataframe(df) if not df.empty else st.warning("Data siswa belum tersedia.")
 
-        elif menu == "Tambah Data":
+        elif submenu == "Tambah Data":
             st.subheader("➕ Tambah Data Siswa")
             with st.form("form_tambah"):
                 columns = df.columns.tolist() if not df.empty else [
@@ -102,7 +76,7 @@ elif nav == "👦 Siswa":
                     save_data(df)
                     st.success("Data siswa berhasil ditambahkan.")
 
-        elif menu == "Edit Data":
+        elif submenu == "Edit Data":
             st.subheader("✏️ Edit Data Siswa")
             nis = st.text_input("Masukkan NIS yang ingin diedit:")
             if nis and nis in df['NIS'].astype(str).values:
@@ -130,7 +104,7 @@ elif nav == "👦 Siswa":
             elif nis:
                 st.warning("NIS tidak ditemukan.")
 
-        elif menu == "Hapus Data":
+        elif submenu == "Hapus Data":
             st.subheader("🗑️ Hapus Data Siswa")
             nis = st.text_input("Masukkan NIS yang ingin dihapus:")
             if st.button("Hapus"):
@@ -141,7 +115,7 @@ elif nav == "👦 Siswa":
                 else:
                     st.warning("NIS tidak ditemukan.")
 
-        elif menu == "Cari Data":
+        elif submenu == "Cari Data":
             st.subheader("🔍 Cari Data Siswa")
             if not df.empty:
                 kolom_dicari = st.selectbox("Pilih Kolom:", df.columns.tolist())
@@ -153,11 +127,12 @@ elif nav == "👦 Siswa":
             else:
                 st.warning("Data siswa belum tersedia.")
 
-# ======================= HALAMAN: GURU =======================
-elif nav == "👨‍🏫 Guru":
+# === MENU GURU ===
+elif main_menu == "Guru":
+    submenu = st.sidebar.selectbox("Fitur Guru:", ["Absen Guru", "Lihat Absen"])
+
     with st.container():
-        st.title("🧑‍🏫 Menu Guru - Absensi")
-        submenu = st.selectbox("Pilih Menu Guru:", ["Absen Guru", "Lihat Absen"])
+        st.title("👨‍🏫 Menu Absensi Guru")
 
         if submenu == "Absen Guru":
             st.subheader("📝 Form Absensi Guru")
