@@ -3,10 +3,14 @@ import pandas as pd
 import os
 from datetime import datetime
 
-# Path file siswa
+# Path file data
 FILE_CSV = 'data/01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
+ABSEN_GURU = 'data/absen_guru.csv'
 
-# Load data siswa
+# Konfigurasi halaman
+st.set_page_config(page_title="Aplikasi Administrasi Data Siswa", layout="wide")
+
+# Fungsi load dan save
 @st.cache_data
 def load_data():
     if os.path.exists(FILE_CSV):
@@ -16,16 +20,22 @@ def load_data():
 def save_data(df):
     df.to_csv(FILE_CSV, index=False)
 
-# Konfigurasi halaman
-st.set_page_config(page_title="Aplikasi Administrasi Data Siswa", layout="wide")
+# === HEADER NAVIGASI PALING ATAS ===
+col1, col2, col3 = st.columns([1, 1, 1])
+with col1:
+    beranda_btn = st.button("🏠 Beranda")
+with col2:
+    siswa_btn = st.button("👦 Siswa")
+with col3:
+    guru_btn = st.button("👨‍🏫 Guru")
 
-st.title("Aplikasi Administrasi Data Siswa")
-
-# Tabs utama
-tab1, tab2, tab3 = st.tabs(["🏠 Beranda", "👦 Siswa", "👨‍🏫 Guru"])
+# Default page
+if not (beranda_btn or siswa_btn or guru_btn):
+    beranda_btn = True
 
 # === BERANDA ===
-with tab1:
+if beranda_btn:
+    st.title("Aplikasi Administrasi Data Siswa BLC")
     st.subheader("Selamat Datang di Aplikasi Administrasi BLC")
     st.markdown("""
     ### 🏫 Brilliant Learning Center (BLC)
@@ -41,9 +51,9 @@ with tab1:
     """)
 
 # === MENU SISWA ===
-with tab2:
-    st.subheader("Manajemen Data Siswa")
-    menu = st.selectbox("📌 Pilih Menu Siswa:", [
+elif siswa_btn:
+    st.title("📚 Manajemen Data Siswa")
+    menu = st.selectbox("Pilih Menu Siswa:", [
         "Lihat Data",
         "Tambah Data",
         "Edit Data",
@@ -54,14 +64,14 @@ with tab2:
     df = load_data()
 
     if menu == "Lihat Data":
-        st.markdown("### 📋 Data Siswa")
+        st.subheader("📋 Data Siswa")
         if not df.empty:
             st.dataframe(df)
         else:
             st.warning("Data siswa belum tersedia.")
 
     elif menu == "Tambah Data":
-        st.markdown("### ➕ Tambah Data Siswa")
+        st.subheader("➕ Tambah Data Siswa")
         with st.form("form_tambah"):
             columns = df.columns.tolist() if not df.empty else [
                 'NIS', 'Nama', 'JK', 'Tempat Lahir', 'Tanggal Lahir',
@@ -76,7 +86,6 @@ with tab2:
             submitted = st.form_submit_button("Tambah")
 
         if submitted:
-            # Validasi duplikat NIS
             if 'NIS' in df.columns and str(input_data['NIS']) in df['NIS'].astype(str).values:
                 st.error("NIS sudah terdaftar.")
             else:
@@ -86,9 +95,8 @@ with tab2:
                 st.success("Data siswa berhasil ditambahkan.")
 
     elif menu == "Edit Data":
-        st.markdown("### ✏️ Edit Data Siswa")
+        st.subheader("✏️ Edit Data Siswa")
         nis = st.text_input("Masukkan NIS yang ingin diedit:")
-
         if nis:
             if nis in df['NIS'].astype(str).values:
                 idx = df[df['NIS'].astype(str) == nis].index[0]
@@ -116,7 +124,7 @@ with tab2:
                 st.warning("NIS tidak ditemukan.")
 
     elif menu == "Hapus Data":
-        st.markdown("### 🗑️ Hapus Data Siswa")
+        st.subheader("🗑️ Hapus Data Siswa")
         nis = st.text_input("Masukkan NIS yang ingin dihapus:")
         if st.button("Hapus"):
             if nis in df['NIS'].astype(str).values:
@@ -127,7 +135,7 @@ with tab2:
                 st.warning("NIS tidak ditemukan.")
 
     elif menu == "Cari Data":
-        st.markdown("### 🔍 Cari Data Siswa")
+        st.subheader("🔍 Cari Data Siswa")
         if not df.empty:
             kolom_dicari = st.selectbox("Pilih Kolom:", df.columns.tolist())
             keyword = st.text_input("Masukkan kata kunci pencarian:")
@@ -140,12 +148,12 @@ with tab2:
             st.warning("Data siswa belum tersedia.")
 
 # === MENU GURU ===
-with tab3:
-    absen_file = 'data/absen_guru.csv'
-    submenu = st.selectbox("📌 Pilih Menu Guru:", ["Absen Guru", "Lihat Absen"])
+elif guru_btn:
+    st.title("🧑‍🏫 Menu Guru - Absensi")
+    submenu = st.selectbox("Pilih Menu Guru:", ["Absen Guru", "Lihat Absen"])
 
     if submenu == "Absen Guru":
-        st.markdown("### 📝 Form Absensi Guru")
+        st.subheader("📝 Form Absensi Guru")
         with st.form("form_absen_guru"):
             nama = st.text_input("Nama Guru")
             tanggal = st.date_input("Tanggal", datetime.now())
@@ -161,19 +169,19 @@ with tab3:
                 "Keterangan": keterangan
             }])
 
-            if os.path.exists(absen_file):
-                df_absen = pd.read_csv(absen_file)
+            if os.path.exists(ABSEN_GURU):
+                df_absen = pd.read_csv(ABSEN_GURU)
                 df_absen = pd.concat([df_absen, new_row], ignore_index=True)
             else:
                 df_absen = new_row
 
-            df_absen.to_csv(absen_file, index=False)
+            df_absen.to_csv(ABSEN_GURU, index=False)
             st.success("Absensi berhasil dicatat.")
 
     elif submenu == "Lihat Absen":
-        st.markdown("### 📊 Data Absensi Guru")
-        if os.path.exists(absen_file):
-            df_absen = pd.read_csv(absen_file)
+        st.subheader("📊 Data Absensi Guru")
+        if os.path.exists(ABSEN_GURU):
+            df_absen = pd.read_csv(ABSEN_GURU)
             st.dataframe(df_absen)
         else:
             st.warning("Belum ada data absensi.")
