@@ -72,9 +72,9 @@ def main():
 
     elif menu == "Edit Data":
         st.subheader("Edit Data Siswa Berdasarkan NIS")
-
         nis_edit = st.text_input("Masukkan NIS Siswa yang Akan Diedit")
-        if nis_edit in df['NIS'].values:
+
+        if nis_edit and nis_edit in df['NIS'].values:
             data_lama = df[df['NIS'] == nis_edit].iloc[0]
             with st.form("form_edit"):
                 data_baru = {}
