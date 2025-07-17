@@ -2,25 +2,39 @@ import streamlit as st
 import pandas as pd
 import os
 
-# Path file CSV
 FILE_CSV = 'data/01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
 
 @st.cache_data
 def load_data():
     if not os.path.exists(FILE_CSV):
-        st.error(f"File CSV '{FILE_CSV}' tidak ditemukan!")
         return pd.DataFrame()
-    df = pd.read_csv(FILE_CSV, parse_dates=['Tanggal Daftar', 'Tanggal Lahir'], dayfirst=True, keep_default_na=False)
-    df['Tanggal Daftar'] = pd.to_datetime(df['Tanggal Daftar'], errors='coerce', dayfirst=True)
-    df['Tanggal Lahir'] = pd.to_datetime(df['Tanggal Lahir'], errors='coerce', dayfirst=True)
+    try:
+        df = pd.read_csv(FILE_CSV, parse_dates=['Tanggal Daftar', 'Tanggal Lahir'], dayfirst=True, keep_default_na=False)
+    except Exception:
+        df = pd.read_csv(FILE_CSV, keep_default_na=False)
+    
+    for col in ['Tanggal Daftar', 'Tanggal Lahir']:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce', dayfirst=True)
+    
     df.fillna('-', inplace=True)
     for col in df.select_dtypes(include=['object']).columns:
-        df[col] = df[col].str.strip()
-    df.drop_duplicates(subset=['NIS'], inplace=True)
-    df['Status'] = df['Status'].str.capitalize()
-    df['JK'] = df['JK'].str.upper()
-    df['No Handphone'] = df['No Handphone'].replace('0', '-')
+        df[col] = df[col].astype(str).str.strip()
+    if 'NIS' in df.columns:
+        df.drop_duplicates(subset=['NIS'], inplace=True)
+    if 'Status' in df.columns:
+        df['Status'] = df['Status'].str.capitalize()
+    if 'JK' in df.columns:
+        df['JK'] = df['JK'].str.upper()
+    if 'No Handphone' in df.columns:
+        df['No Handphone'] = df['No Handphone'].replace('0', '-')
     return df
+
+def safe_date(value):
+    try:
+        return pd.to_datetime(value)
+    except:
+        return pd.to_datetime("2000-01-01")
 
 def main():
     st.title("Aplikasi Administrasi Data Siswa BLC Cicukang")
@@ -36,7 +50,7 @@ def main():
     df = load_data()
 
     if df.empty:
-        st.warning("Data kosong atau file CSV tidak ditemukan.")
+        st.warning(f"Data kosong atau file CSV tidak ditemukan di: `{FILE_CSV}`")
         return
 
     if menu == "Lihat Data":
@@ -45,18 +59,17 @@ def main():
 
     elif menu == "Tambah Data":
         st.subheader("Tambah Data Siswa Baru")
-
         with st.form("form_tambah"):
             data_baru = {}
             for kolom in df.columns:
-                if kolom == "Tanggal Daftar" or kolom == "Tanggal Lahir":
+                if kolom == "No":
+                    continue
+                elif "Tanggal" in kolom:
                     data_baru[kolom] = st.date_input(kolom)
                 elif kolom == "JK":
-                    data_baru[kolom] = st.selectbox("Jenis Kelamin", ["L", "P"])
+                    data_baru[kolom] = st.selectbox(kolom, ["L", "P"])
                 elif kolom == "Status":
-                    data_baru[kolom] = st.selectbox("Status", ["Aktif", "Non Aktif"])
-                elif kolom == "No":
-                    continue
+                    data_baru[kolom] = st.selectbox(kolom, ["Aktif", "Non Aktif"])
                 else:
                     data_baru[kolom] = st.text_input(kolom)
             submit = st.form_submit_button("Tambah")
@@ -65,7 +78,7 @@ def main():
             if data_baru['NIS'] in df['NIS'].values:
                 st.error("NIS sudah ada, tidak bisa tambah data duplikat.")
             else:
-                data_baru['No'] = df['No'].max() + 1 if 'No' in df.columns else 1
+                data_baru['No'] = df['No'].max() + 1 if 'No' in df.columns else len(df) + 1
                 df = pd.concat([df, pd.DataFrame([data_baru])], ignore_index=True)
                 st.success("Data siswa baru berhasil ditambahkan.")
                 st.dataframe(df.tail(5))
@@ -81,12 +94,12 @@ def main():
                 for kolom in df.columns:
                     if kolom == "No":
                         continue
-                    elif kolom == "Tanggal Daftar" or kolom == "Tanggal Lahir":
-                        data_baru[kolom] = st.date_input(kolom, value=pd.to_datetime(data_lama[kolom], errors='coerce'))
+                    elif "Tanggal" in kolom:
+                        data_baru[kolom] = st.date_input(kolom, value=safe_date(data_lama[kolom]))
                     elif kolom == "JK":
-                        data_baru[kolom] = st.selectbox("Jenis Kelamin", ["L", "P"], index=["L", "P"].index(data_lama[kolom]))
+                        data_baru[kolom] = st.selectbox(kolom, ["L", "P"], index=["L", "P"].index(data_lama.get(kolom, "L")))
                     elif kolom == "Status":
-                        data_baru[kolom] = st.selectbox("Status", ["Aktif", "Non Aktif"], index=["Aktif", "Non Aktif"].index(data_lama[kolom]))
+                        data_baru[kolom] = st.selectbox(kolom, ["Aktif", "Non Aktif"], index=["Aktif", "Non Aktif"].index(data_lama.get(kolom, "Aktif")))
                     else:
                         data_baru[kolom] = st.text_input(kolom, value=str(data_lama[kolom]))
                 submit = st.form_submit_button("Update")
