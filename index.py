@@ -21,10 +21,27 @@ def save_data(df):
 st.set_page_config(page_title="Aplikasi Administrasi Data Siswa", layout="wide")
 st.title("Aplikasi Administrasi Data Siswa")
 
-guru_menu = st.sidebar.selectbox("Pilih Jenis Data:", ["Siswa", "Guru"])
+# === MENU UTAMA DI SIDEBAR ===
+main_menu = st.sidebar.selectbox("Menu Utama:", ["Beranda", "Siswa", "Guru"])
+
+# === BERANDA ===
+if main_menu == "Beranda":
+    st.subheader("Selamat Datang di Aplikasi Administrasi BLC")
+    st.markdown("""
+    ### 🏫 Bina Lestari Cendekia (BLC)
+    
+    Bina Lestari Cendekia (BLC) merupakan lembaga pendidikan yang berfokus pada pengembangan karakter dan pengetahuan anak usia dini dan dasar. Kami berkomitmen untuk memberikan layanan pendidikan berkualitas melalui pendekatan yang humanis, Islami, dan kreatif.
+
+    **Alamat:** Cicukang, Bojongsoang, Kab. Bandung  
+    **Telepon:** 0812-XXXX-XXXX  
+    **Email:** info@blc.sch.id  
+    **Website:** www.blc.sch.id
+
+    Aplikasi ini dibuat untuk membantu pengelolaan data siswa dan absensi guru secara digital, efisien, dan mudah digunakan.
+    """)
 
 # === FITUR UNTUK DATA SISWA ===
-if guru_menu == "Siswa":
+elif main_menu == "Siswa":
     menu = st.sidebar.selectbox("Pilih Menu Fitur:", [
         "Lihat Data",
         "Tambah Data",
@@ -118,7 +135,7 @@ if guru_menu == "Siswa":
             st.warning("Data siswa belum tersedia.")
 
 # === FITUR UNTUK ABSENSI GURU ===
-elif guru_menu == "Guru":
+elif main_menu == "Guru":
     absen_file = 'data/absen_guru.csv'
     submenu = st.sidebar.selectbox("Pilih Menu Guru:", ["Absen Guru", "Lihat Absen"])
 
