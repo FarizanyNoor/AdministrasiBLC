@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # Nama file CSV utama
-FILE_CSV = '01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
+FILE_CSV = 'data/01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
 FILE_CSV_SAVE = 'data_siswa_updated.csv'
 
 @st.cache_data
