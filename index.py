@@ -43,7 +43,7 @@ if main_menu == "Beranda":
             """)
 
         with col2:
-            st.image("https://cdn-icons-png.flaticon.com/512/3135/3135755.png", width=200, caption="BLC Logo")
+            st.image("LOGO (1).png", width=200)
 
         st.divider()
 
