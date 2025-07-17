@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
 import os
-from datetime import datetime
 
+# Path file CSV
 FILE_CSV = 'data/01. Data Siswa BLC Cicukang TP 24_25 - Cicukang.csv'
 
 @st.cache_data
 def load_data():
     if not os.path.exists(FILE_CSV):
-        st.error(f"File CSV '{FILE_CSV}' tidak ditemukan! Mohon pastikan file ada di folder yang benar.")
+        st.error(f"File CSV '{FILE_CSV}' tidak ditemukan!")
         return pd.DataFrame()
     df = pd.read_csv(FILE_CSV, parse_dates=['Tanggal Daftar', 'Tanggal Lahir'], dayfirst=True, keep_default_na=False)
     df['Tanggal Daftar'] = pd.to_datetime(df['Tanggal Daftar'], errors='coerce', dayfirst=True)
@@ -23,9 +23,15 @@ def load_data():
     return df
 
 def main():
-    st.title("Aplikasi Manajemen Data Siswa BLC Cicukang")
+    st.title("Aplikasi Administrasi Data Siswa BLC Cicukang")
 
-    menu = st.sidebar.selectbox("Pilih Menu Fitur:", ["Lihat Data", "Tambah Data", "Hapus Data"])
+    menu = st.sidebar.selectbox("Pilih Menu Fitur:", [
+        "Lihat Data", 
+        "Tambah Data", 
+        "Edit Data", 
+        "Hapus Data", 
+        "Cari Data"
+    ])
 
     df = load_data()
 
@@ -41,86 +47,57 @@ def main():
         st.subheader("Tambah Data Siswa Baru")
 
         with st.form("form_tambah"):
-            no = int(df['No'].max()) + 1 if 'No' in df.columns and len(df) > 0 else 1
-            nis = st.text_input("NIS")
-            tanggal_daftar = st.date_input("Tanggal Daftar", datetime.today())
-            nama_siswa = st.text_input("Nama Siswa")
-            kelas = st.text_input("Kelas")
-            kelas_blc = st.text_input("Kelas BLC")
-            program = st.text_input("Program")
-            tingkat = st.text_input("Tingkat")
-            status = st.selectbox("Status", ["Aktif", "Non aktif", "Non Aktif", "Aktif"])
-            jk = st.selectbox("Jenis Kelamin", ["L", "P"])
-            asal_sekolah = st.text_input("Asal Sekolah")
-            alamat = st.text_input("Alamat")
-            rt = st.text_input("RT")
-            rw = st.text_input("RW")
-            desa = st.text_input("Desa")
-            kecamatan = st.text_input("Kecamatan")
-            kota_kab = st.text_input("Kota/Kab.")
-            no_handphone = st.text_input("No Handphone")
-            agama = st.text_input("Agama")
-            tempat_lahir = st.text_input("Tempat Lahir")
-            tanggal_lahir = st.date_input("Tanggal Lahir", datetime.today())
-            nama_ayah = st.text_input("Nama Ayah")
-            hp_ayah = st.text_input("Hp Ayah")
-            nama_ibu = st.text_input("Nama Ibu")
-            hp_ibu = st.text_input("Hp Ibu")
-            koordinasi = st.text_input("Koordinasi")
-            kk = st.text_input("KK")
-            keterangan = st.text_input("Keterangan")
-            kontak_siswa = st.text_input("Kontak Siswa")
-            kontak_ortu = st.text_input("Kontak Ortu")
-            petugas = st.text_input("Petugas")
+            data_baru = {}
+            for kolom in df.columns:
+                if kolom == "Tanggal Daftar" or kolom == "Tanggal Lahir":
+                    data_baru[kolom] = st.date_input(kolom)
+                elif kolom == "JK":
+                    data_baru[kolom] = st.selectbox("Jenis Kelamin", ["L", "P"])
+                elif kolom == "Status":
+                    data_baru[kolom] = st.selectbox("Status", ["Aktif", "Non Aktif"])
+                elif kolom == "No":
+                    continue
+                else:
+                    data_baru[kolom] = st.text_input(kolom)
+            submit = st.form_submit_button("Tambah")
 
-            submitted = st.form_submit_button("Tambah")
-
-        if submitted:
-            if nis in df['NIS'].values:
+        if submit:
+            if data_baru['NIS'] in df['NIS'].values:
                 st.error("NIS sudah ada, tidak bisa tambah data duplikat.")
             else:
-                new_data = {
-                    'No': no,
-                    'NIS': nis,
-                    'Tanggal Daftar': tanggal_daftar.strftime('%d-%b-%y'),
-                    'Nama Siswa': nama_siswa,
-                    'Kelas': kelas,
-                    'Kelas BLC': kelas_blc,
-                    'Program': program,
-                    'Tingkat': tingkat,
-                    'Status': status.capitalize(),
-                    'JK': jk.upper(),
-                    'Asal Sekolah': asal_sekolah,
-                    'Alamat': alamat,
-                    'RT': rt,
-                    'RW': rw,
-                    'Desa': desa,
-                    'Kecamatan': kecamatan,
-                    'Kota/Kab.': kota_kab,
-                    'No Handphone': no_handphone,
-                    'Agama': agama,
-                    'Tempat Lahir': tempat_lahir,
-                    'Tanggal Lahir': tanggal_lahir.strftime('%d-%b-%y'),
-                    'Nama Ayah': nama_ayah,
-                    'Hp Ayah': hp_ayah,
-                    'Nama Ibu': nama_ibu,
-                    'Hp Ibu': hp_ibu,
-                    'Koordinasi': koordinasi,
-                    'KK': kk,
-                    'Keterangan': keterangan,
-                    'Kontak Siswa': kontak_siswa,
-                    'Kontak Ortu': kontak_ortu,
-                    'Petugas': petugas
-                }
-
-                # Lengkapi kolom lain dengan '-' jika ada kolom tambahan di CSV
-                for col in df.columns:
-                    if col not in new_data:
-                        new_data[col] = '-'
-
-                df = df.append(new_data, ignore_index=True)
+                data_baru['No'] = df['No'].max() + 1 if 'No' in df.columns else 1
+                df = pd.concat([df, pd.DataFrame([data_baru])], ignore_index=True)
                 st.success("Data siswa baru berhasil ditambahkan.")
                 st.dataframe(df.tail(5))
+
+    elif menu == "Edit Data":
+        st.subheader("Edit Data Siswa Berdasarkan NIS")
+
+        nis_edit = st.text_input("Masukkan NIS Siswa yang Akan Diedit")
+        if nis_edit in df['NIS'].values:
+            data_lama = df[df['NIS'] == nis_edit].iloc[0]
+            with st.form("form_edit"):
+                data_baru = {}
+                for kolom in df.columns:
+                    if kolom == "No":
+                        continue
+                    elif kolom == "Tanggal Daftar" or kolom == "Tanggal Lahir":
+                        data_baru[kolom] = st.date_input(kolom, value=pd.to_datetime(data_lama[kolom], errors='coerce'))
+                    elif kolom == "JK":
+                        data_baru[kolom] = st.selectbox("Jenis Kelamin", ["L", "P"], index=["L", "P"].index(data_lama[kolom]))
+                    elif kolom == "Status":
+                        data_baru[kolom] = st.selectbox("Status", ["Aktif", "Non Aktif"], index=["Aktif", "Non Aktif"].index(data_lama[kolom]))
+                    else:
+                        data_baru[kolom] = st.text_input(kolom, value=str(data_lama[kolom]))
+                submit = st.form_submit_button("Update")
+
+            if submit:
+                for k, v in data_baru.items():
+                    df.loc[df['NIS'] == nis_edit, k] = v
+                st.success("Data berhasil diperbarui.")
+                st.dataframe(df[df['NIS'] == nis_edit])
+        elif nis_edit:
+            st.warning("NIS tidak ditemukan.")
 
     elif menu == "Hapus Data":
         st.subheader("Hapus Data Siswa")
@@ -132,6 +109,21 @@ def main():
                 st.dataframe(df)
             else:
                 st.error("NIS tidak ditemukan.")
+
+    elif menu == "Cari Data":
+        st.subheader("Cari Data Siswa")
+        kolom_terpilih = st.selectbox("Pilih Kolom yang Ingin Dicari", df.columns.tolist())
+        kata_kunci = st.text_input("Masukkan Kata Kunci atau Angka yang Dicari")
+        if st.button("Cari"):
+            if kata_kunci.strip() == "":
+                st.warning("Masukkan kata kunci terlebih dahulu.")
+            else:
+                hasil = df[df[kolom_terpilih].astype(str).str.contains(kata_kunci, case=False, na=False)]
+                if hasil.empty:
+                    st.info(f"Tidak ditemukan hasil untuk '{kata_kunci}' di kolom '{kolom_terpilih}'.")
+                else:
+                    st.success(f"Ditemukan {len(hasil)} data yang cocok.")
+                    st.dataframe(hasil)
 
 if __name__ == "__main__":
     main()
